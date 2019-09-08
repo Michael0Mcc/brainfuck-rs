@@ -1,3 +1,10 @@
+/* 
+** Brainfuck Interpreter in Rust
+** - Starts at cell 0
+** - Both cell and cell value cannot be below 0
+** - Max number of cell and cell value varies per machine
+*/ 
+
 use std::fs::File;
 use std::io::prelude::*;
 
