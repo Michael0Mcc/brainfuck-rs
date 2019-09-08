@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::ErrorKind;
 
 enum Command {
 	Increment,
@@ -13,7 +12,17 @@ enum Command {
 	Input,
 }
 
-fn get_close(index: usize, bf: Vec<Command>) -> usize {
+fn get_input() -> usize {
+	use std::io;
+	let mut i = String::new();
+	io::stdin().read_line(&mut i).expect("Failed to get user input!");
+	match i.chars().next() {
+		Some(c) => c as usize,
+		None => panic!("Recived invalid input"),
+	}
+}
+
+fn get_close(index: usize, bf: &Vec<Command>) -> usize {
 	let mut stack: Vec<Command> = Vec::new();
 	for i in index..bf.len() {
 		match bf.get(i) {
@@ -34,7 +43,7 @@ fn get_close(index: usize, bf: Vec<Command>) -> usize {
 	panic!("'[' at index {} has no close!", index);
 }
 
-fn get_open(index: usize, bf: Vec<Command>) -> usize {
+fn get_open(index: usize, bf: &Vec<Command>) -> usize {
 	let mut stack: Vec<Command> = Vec::new();
 	for i in (0..index+1).rev() {
 		match bf.get(i) {
@@ -83,8 +92,56 @@ fn get_bf(path: &str) -> Vec<Command> {
 
 fn main() {
 	let mut cells: Vec<usize> = vec![0];
-	let current_cell: usize = 0;
-	let current_command: usize = 0;
+	let mut current_cell: usize = 0;
+	let mut current_command: usize = 0;
 	let bf = get_bf("hello.bf");
- 	println!("{}", get_open(8, bf));
+ 	
+	while current_command < bf.len() {
+		if let Some(c) = bf.get(current_command) {
+			match c {
+				Command::Increment => {
+					cells[current_cell] += 1;
+				},
+				Command::Decrement => {
+					if cells[current_cell] > 0 {
+						cells[current_cell] -= 1;
+					} else {
+						panic!("Value of cell cannot go below 0");
+					}
+				},
+				Command::ShiftRight => {
+					if current_cell == cells.len() -1 {
+						cells.push(0);
+					}
+					current_cell += 1;
+				},
+				Command::ShiftLeft => {
+					if current_cell > 0 {
+						current_cell -= 1;
+					} else {
+						panic!("Cell index cannot be a negative number");
+					}
+				},
+				Command::ForwardJump => {
+					if cells[current_cell] == 0 {
+						current_command = get_close(current_command, &bf);
+					}
+				},
+				Command::BackwardJump => {
+					if cells[current_cell] != 0 {
+						current_command = get_open(current_command, &bf);
+					}
+				},
+				Command::Output => {
+					if cells[current_cell] < 128 {
+						print!("{}", cells[current_cell] as u8 as char);
+					}
+				},
+				Command::Input => {
+					cells[current_cell] = get_input();
+				},
+			}
+		}
+		current_command += 1;
+	}
 }
